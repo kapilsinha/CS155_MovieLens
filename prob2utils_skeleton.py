@@ -73,7 +73,7 @@ def train_model(M, N, K, eta, reg, Y, eps=0.0001, max_epochs=300):
     b = np.random.random((N)) - 0.5
 
     # Error for epoch 0
-    err = get_err(U, V, Y, reg)
+    err = get_err(U, V, Y, a, b, reg)
     first_diff = 0
     epoch = 1
     prev = 0

@@ -4,7 +4,7 @@
 import numpy as np
 import copy
 
-def grad_U(Ui, Yij, Vj, ai, bj, reg, eta):
+def grad_U(Ui, Yij, Vj, reg, eta):
     """
     Takes as input Ui (the ith row of U), a training point Yij, the column
     vector Vj (jth column of V^T), reg (the regularization parameter lambda),
@@ -13,9 +13,9 @@ def grad_U(Ui, Yij, Vj, ai, bj, reg, eta):
     Returns the gradient of the regularized loss function with
     respect to Ui multiplied by eta.
     """
-    return eta * (reg * Ui - (Vj * (Yij - (np.dot(Ui, Vj) + ai + bj))))
+    return eta * (reg * Ui - (Vj * (Yij - np.dot(Ui, Vj))))
 
-def grad_V(Vj, Yij, Ui, ai, bj, reg, eta):
+def grad_V(Vj, Yij, Ui, reg, eta):
     """
     Takes as input the column vector Vj (jth column of V^T), a training point Yij,
     Ui (the ith row of U), reg (the regularization parameter lambda),
@@ -24,9 +24,9 @@ def grad_V(Vj, Yij, Ui, ai, bj, reg, eta):
     Returns the gradient of the regularized loss function with
     respect to Vj multiplied by eta.
     """
-    return eta * (reg * Vj - (Ui * (Yij - (np.dot(Ui, Vj) + ai + bj))))
+    return eta * (reg * Vj - (Ui * (Yij - np.dot(Ui, Vj))))
 
-def get_err(U, V, Y, a, b, reg=0.0):
+def get_err(U, V, Y, reg=0.0):
     """
     Takes as input a matrix Y of triples (i, j, Y_ij) where i is the index of a user,
     j is the index of a movie, and Y_ij is user i's rating of movie j and
@@ -40,7 +40,7 @@ def get_err(U, V, Y, a, b, reg=0.0):
     for k in range(len(Y)):
         i = Y[k][0] - 1
         j = Y[k][1] - 1
-        err += (Y[k][2] - (np.dot(U[i], V[j]) + a[i] + b[j])) ** 2
+        err += (Y[k][2] - np.dot(U[i], V[j])) ** 2
 
     err /= 2
 
@@ -68,12 +68,8 @@ def train_model(M, N, K, eta, reg, Y, eps=0.0001, max_epochs=300):
     U = np.random.random((M, K)) - 0.5
     V = np.random.random((N, K)) - 0.5
 
-    # Initialize bias terms
-    a = np.random.random((M)) - 0.5
-    b = np.random.random((N)) - 0.5
-
     # Error for epoch 0
-    err = get_err(U, V, Y, a, b, reg)
+    err = get_err(U, V, Y, reg)
     first_diff = 0
     epoch = 1
     prev = 0
@@ -85,11 +81,11 @@ def train_model(M, N, K, eta, reg, Y, eps=0.0001, max_epochs=300):
             i = Y[k][0] - 1
             j = Y[k][1] - 1
 
-            U[i] -= grad_U(U[i], Y[k][2], V[j], a[i], b[j], reg, eta)
-            V[j] -= grad_V(V[j], Y[k][2], U[i], a[i], b[j], reg, eta)
+            U[i] -= grad_U(U[i], Y[k][2], V[j], reg, eta)
+            V[j] -= grad_V(V[j], Y[k][2], U[i], reg, eta)
 
         prev = err
-        err = get_err(U, V, Y, a, b, reg)
+        err = get_err(U, V, Y, reg)
 
         # Get the first difference in errors between epoch 1 and epoch 0
         if(epoch == 1):

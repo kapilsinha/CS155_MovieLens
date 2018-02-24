@@ -4,7 +4,7 @@
 import numpy as np
 import copy
 
-def grad_U(Ui, Yij, Vj, ai, bj, reg, eta):
+def grad_U(Ui, Yij, Vj, ai, bj, mu, reg, eta):
     """
     Takes as input Ui (the ith row of U), a training point Yij, the column
     vector Vj (jth column of V^T), reg (the regularization parameter lambda),
@@ -13,9 +13,9 @@ def grad_U(Ui, Yij, Vj, ai, bj, reg, eta):
     Returns the gradient of the regularized loss function with
     respect to Ui multiplied by eta.
     """
-    return eta * (reg * Ui - (Vj * (Yij - (np.dot(Ui, Vj) + ai + bj))))
+    return eta * (reg * Ui - 2. * (Vj * (Yij - mu - (np.dot(Ui, Vj) + ai + bj))))
 
-def grad_V(Vj, Yij, Ui, ai, bj, reg, eta):
+def grad_V(Vj, Yij, Ui, ai, bj, mu, reg, eta):
     """
     Takes as input the column vector Vj (jth column of V^T), a training point Yij,
     Ui (the ith row of U), reg (the regularization parameter lambda),
@@ -24,7 +24,19 @@ def grad_V(Vj, Yij, Ui, ai, bj, reg, eta):
     Returns the gradient of the regularized loss function with
     respect to Vj multiplied by eta.
     """
-    return eta * (reg * Vj - (Ui * (Yij - (np.dot(Ui, Vj) + ai + bj))))
+    return eta * (reg * Vj - 2. * (Ui * (Yij - mu - (np.dot(Ui, Vj) + ai + bj))))
+
+def grad_a(Ui, Yij, Vj, ai, bj, mu, reg, eta):
+    '''
+    Compute the gradient with respect to the bias a vector
+    '''
+    return eta * (reg * ai - 2. * (Yij - mu - (np.dot(Ui, Vj) + ai + bj)))
+
+def grad_b(Ui, Yij, Vj, ai, bj, mu, reg, eta):
+    '''
+    Compute the gradient with respect to the bias b vector
+    '''
+    return eta * (reg * bj - 2. * (Yij - mu - (np.dot(Ui, Vj) + ai + bj)))
 
 def get_err(U, V, Y, a, b, reg=0.0, mu=0.0):
     """
@@ -88,8 +100,10 @@ def train_model(M, N, K, eta, reg, Y, eps=0.0001, max_epochs=300):
             i = Y[k][0] - 1
             j = Y[k][1] - 1
 
-            U[i] -= grad_U(U[i], Y[k][2], V[j], a[i], b[j], reg, eta)
-            V[j] -= grad_V(V[j], Y[k][2], U[i], a[i], b[j], reg, eta)
+            U[i] -= grad_U(U[i], Y[k][2], V[j], a[i], b[j], mu, reg, eta)
+            V[j] -= grad_V(V[j], Y[k][2], U[i], a[i], b[j], mu, reg, eta)
+            a[i] -= grad_a(U[i], Y[k][2], V[j], a[i], b[j], mu, reg, eta)
+            b[j] -= grad_b(U[i], Y[k][2], V[j], a[i], b[j], mu, reg, eta)
 
         prev = err
         err = get_err(U, V, Y, a, b, reg, mu)

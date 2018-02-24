@@ -118,4 +118,4 @@ def train_model(M, N, K, eta, reg, Y, eps=0.0001, max_epochs=300):
 
         epoch += 1
 
-    return (U, V, a, b, err)
+    return (U, V, a, b, err, mu)
